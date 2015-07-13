@@ -16,6 +16,7 @@ package com.massfords.maven.spel;
  * limitations under the License.
  */
 
+import org.apache.maven.artifact.DependencyResolutionRequiredException;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Component;
@@ -25,7 +26,9 @@ import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
 import org.reflections.Reflections;
 import org.springframework.expression.ExpressionParser;
+import org.springframework.expression.ParseException;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import javax.annotation.Generated;
 import java.io.File;
@@ -34,6 +37,7 @@ import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
@@ -47,47 +51,107 @@ public class SpelPlugin extends AbstractMojo {
     @Component
     private MavenProject project;
 
+    // todo - find and add any other common annotations
+    private final List<SpelAnnotation> defaults = new ArrayList<SpelAnnotation>(
+        Arrays.asList(new SpelAnnotation[] {
+                new SpelAnnotation(PreAuthorize.class.getName()),
+        })
+    );
+
+    private int errorCount = 0;
+
+    @Parameter(property = "maxValidationErrors", required = false, defaultValue = "100")
+    private int maxValidationErrors;
+
     @Parameter(property = "annotations", required = false)
-    // todo - have this default to common ones like PreAuthorize (and others?)
     private List<SpelAnnotation> annotations;
 
     public void execute() throws MojoExecutionException {
 
+        // Add the defaults to the list of annotations without overriding user settings for the attribute field
+        for (SpelAnnotation defaultSetting : defaults) {
+            boolean userSpecifiedSetting = false;
+            for (SpelAnnotation userSetting : annotations) {
+                if (userSetting.getName().equals(defaultSetting.getName())) {
+                    userSpecifiedSetting = true;
+                    break;
+                }
+            }
+            if (!userSpecifiedSetting) {
+                annotations.add(defaultSetting);
+            }
+        }
+
         ExpressionParser parser = new SpelExpressionParser();
 
         try {
-            List<String> classpathElements = project.getCompileClasspathElements();
-            List<URL> projectClasspathList = new ArrayList<URL>();
-            for (String element : classpathElements) {
-                try {
-                    projectClasspathList.add(new File(element).toURI().toURL());
-                } catch (MalformedURLException e) {
-                    throw new MojoExecutionException(element + " is an invalid classpath element", e);
-                }
-            }
-
-            URL[] urls = new URL[projectClasspathList.size()];
+            URL[] urls = buildMavenClasspath();
             // ... and now you can pass the above classloader to Reflections
             Reflections reflections = new Reflections(urls);
+
             for(SpelAnnotation sa : annotations) {
-                // todo - catch and throw meaningful error here if they provided the wrong fully qualified name
-                //noinspection unchecked
-                final Class<? extends Annotation> annoType = (Class<? extends Annotation>) Class.forName(sa.getName());
+                Class<? extends Annotation> annoType;
+                try {
+                    //noinspection unchecked
+                    annoType = (Class<? extends Annotation>) Class.forName(sa.getName());
+                } catch (Exception e) {
+                    reportError("Could not find and instantiate class for annotation with name: " + sa.getName());
+                    continue;
+                }
                 Set<Method> set = reflections.getMethodsAnnotatedWith(annoType);
                 for(Method m : set) {
                     Annotation anno = m.getAnnotation(annoType);
 
                     Method attrGetter = annoType.getDeclaredMethod(sa.getAttribute());
-                    // todo - report an error if it's not a string
+
+                    Object expressionObj = attrGetter.invoke(anno);
+                    if (!(expressionObj instanceof String)) {
+                        reportError("Attribute " + sa.getAttribute() + " in " + sa.getName() + " was not a string");
+                        continue;
+                    }
                     String expression = (String) attrGetter.invoke(anno);
-                    parser.parseExpression(expression);
-                    // todo - report an error if there's a problem parsing
+                    try {
+                        parser.parseExpression(expression);
+                    } catch (ParseException e) {
+                        // todo - add method name whitelisting and walk AST to check for invalid method signatures
+                        reportError("Spel annotation " + sa.getName() + " attribute " + sa.getAttribute() +
+                                " failed to parse: " + e.getMessage());
+                    }
                 }
             }
         } catch (Exception e) {
-            // todo - the code above should be more resilient. We should keep going and report errors up to a max of 100 errors.
-            // Thus, if we get here, it's something fatal that we can't recover from.
-            throw new MojoExecutionException("Have a meaningful exception here", e);
+            throw new MojoExecutionException("A fatal error occurred while validating Spel annotations," +
+                    " see stack trace for details.", e);
+        }
+    }
+
+    protected URL[] buildMavenClasspath() throws DependencyResolutionRequiredException, MojoExecutionException {
+        return buildMavenClasspath(project.getCompileClasspathElements());
+    }
+
+    protected URL[] buildMavenClasspath(List<String> classpathElements) throws MojoExecutionException {
+        List<URL> projectClasspathList = new ArrayList<URL>();
+        for (String element : classpathElements) {
+            try {
+                projectClasspathList.add(new File(element).toURI().toURL());
+            } catch (MalformedURLException e) {
+                throw new MojoExecutionException(element + " is an invalid classpath element", e);
+            }
+        }
+
+        return new URL[projectClasspathList.size()];
+    }
+
+    /**
+     * Reports the occurrence of an error while testing
+     * @param message the error message to report
+     * @throws SpelValidationException if the amount of errors exceeds the specified maximum
+     */
+    private void reportError(String message) throws SpelValidationException {
+        getLog().warn(message);
+        ++errorCount;
+        if (errorCount >= maxValidationErrors) {
+            throw new SpelValidationException("Reached Maximum Amount of Errors");
         }
     }
 
@@ -109,5 +173,11 @@ public class SpelPlugin extends AbstractMojo {
     @Generated("generated by IDE")
     public void setAnnotations(List<SpelAnnotation> annotations) {
         this.annotations = annotations;
+    }
+
+    @Generated("generated by IDE")
+     public SpelPlugin setMaxValidationErrors(int maxValidationErrors) {
+        this.maxValidationErrors = maxValidationErrors;
+        return this;
     }
 }
