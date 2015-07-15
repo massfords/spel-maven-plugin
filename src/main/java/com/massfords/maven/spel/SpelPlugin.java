@@ -113,7 +113,6 @@ public class SpelPlugin extends AbstractMojo {
                     try {
                         parser.parseExpression(expression);
                     } catch (ParseException e) {
-                        // todo - add method name whitelisting and walk AST to check for invalid method signatures
                         reportError("Spel annotation " + sa.getName() + " attribute " + sa.getAttribute() +
                                 " failed to parse: " + e.getMessage());
                     }
