@@ -96,7 +96,6 @@ public class SpelPlugin extends AbstractMojo {
                     String expression = (String) attrGetter.invoke(anno);
                     try {
                         Expression exp = parser.parseExpression(expression);
-
                     } catch (ParseException e) {
                         reportError("Spel annotation " + sa.getName() + " attribute " + sa.getAttribute() +
                                 " failed to parse: " + e.getMessage());
