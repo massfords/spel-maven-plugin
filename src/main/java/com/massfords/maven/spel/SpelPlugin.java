@@ -53,11 +53,7 @@ public class SpelPlugin extends AbstractMojo {
     private MavenProject project;
 
     // todo - find and add any other common annotations
-    private final List<SpelAnnotation> defaults = new ArrayList<SpelAnnotation>(
-        Arrays.asList(new SpelAnnotation[] {
-                new SpelAnnotation(PreAuthorize.class.getName()),
-        })
-    );
+    private final List<SpelAnnotation> defaults = Arrays.asList( new SpelAnnotation(PreAuthorize.class.getName()) );
 
     private int errorCount = 0;
 
@@ -65,23 +61,9 @@ public class SpelPlugin extends AbstractMojo {
     private int maxValidationErrors;
 
     @Parameter(property = "annotations", required = false)
-    private List<SpelAnnotation> annotations;
+    private List<SpelAnnotation> annotations = defaults;
 
     public void execute() throws MojoExecutionException {
-
-        // Add the defaults to the list of annotations without overriding user settings for the attribute field
-        for (SpelAnnotation defaultSetting : defaults) {
-            boolean userSpecifiedSetting = false;
-            for (SpelAnnotation userSetting : annotations) {
-                if (userSetting.getName().equals(defaultSetting.getName())) {
-                    userSpecifiedSetting = true;
-                    break;
-                }
-            }
-            if (!userSpecifiedSetting) {
-                annotations.add(defaultSetting);
-            }
-        }
 
         ExpressionParser parser = new SpelExpressionParser();
 
@@ -99,6 +81,7 @@ public class SpelPlugin extends AbstractMojo {
                     reportError("Could not find and instantiate class for annotation with name: " + sa.getName());
                     continue;
                 }
+                
                 Set<Method> set = reflections.getMethodsAnnotatedWith(annoType);
                 for(Method m : set) {
                     Annotation anno = m.getAnnotation(annoType);
