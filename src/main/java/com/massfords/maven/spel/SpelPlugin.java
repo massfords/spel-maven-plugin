@@ -81,7 +81,7 @@ public class SpelPlugin extends AbstractMojo {
                     reportError("Could not find and instantiate class for annotation with name: " + sa.getName());
                     continue;
                 }
-                
+                // todo - Allow configurable restriction of search to specific packages
                 Set<Method> set = reflections.getMethodsAnnotatedWith(annoType);
                 for(Method m : set) {
                     Annotation anno = m.getAnnotation(annoType);
