@@ -107,6 +107,10 @@ public class SpelPlugin extends AbstractMojo {
             throw new MojoExecutionException("A fatal error occurred while validating Spel annotations," +
                     " see stack trace for details.", e);
         }
+        if (errorCount > 0) {
+            throw new MojoExecutionException("Spel validation failed on one or more annotations. See the specific" +
+            "error output for more information.");
+        }
     }
 
     protected URL[] buildMavenClasspath() throws DependencyResolutionRequiredException, MojoExecutionException {
