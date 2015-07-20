@@ -25,6 +25,7 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
 import org.reflections.Reflections;
+import org.springframework.expression.Expression;
 import org.springframework.expression.ExpressionParser;
 import org.springframework.expression.ParseException;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
@@ -111,7 +112,8 @@ public class SpelPlugin extends AbstractMojo {
                     }
                     String expression = (String) attrGetter.invoke(anno);
                     try {
-                        parser.parseExpression(expression);
+                        Expression exp = parser.parseExpression(expression);
+
                     } catch (ParseException e) {
                         reportError("Spel annotation " + sa.getName() + " attribute " + sa.getAttribute() +
                                 " failed to parse: " + e.getMessage());
@@ -147,7 +149,7 @@ public class SpelPlugin extends AbstractMojo {
      * @throws SpelValidationException if the amount of errors exceeds the specified maximum
      */
     private void reportError(String message) throws SpelValidationException {
-        getLog().warn(message);
+        getLog().error(message);
         ++errorCount;
         if (errorCount >= maxValidationErrors) {
             throw new SpelValidationException("Reached Maximum Amount of Errors");
