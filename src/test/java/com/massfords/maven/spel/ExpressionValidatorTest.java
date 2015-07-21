@@ -2,30 +2,28 @@ package com.massfords.maven.spel;
 
 import org.junit.Ignore;
 import org.junit.Test;
-
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import org.springframework.expression.ParseException;
 
 /**
  * @author markford
  */
-@Ignore
 public class ExpressionValidatorTest {
 
     private ExpressionValidator validator = new ExpressionValidator();
 
     @Test
     public void ok() throws Exception {
-        assertTrue(validator.isValid("hasRole('ROLE_ADMIN')"));
+        validator.validate("hasRole('ROLE_ADMIN')");
     }
 
-    @Test
+    @Test(expected = ParseException.class)
     public void missingQuote() throws Exception {
-        assertFalse(validator.isValid("hasRole('ROLE_ADMIN)"));
+        validator.validate("hasRole('ROLE_ADMIN)");
     }
 
-    @Test
+    @Test(expected = ExpressionValidationException.class)
+    @Ignore("disabled until we integrate a contexts for expressions")
     public void unknownFunction() throws Exception {
-        assertFalse(validator.isValid("hasRoll('ROLE_ADMIN')"));
+        validator.validate("hasRoll('ROLE_ADMIN')");
     }
 }
