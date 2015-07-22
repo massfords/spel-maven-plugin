@@ -195,7 +195,7 @@ public class SpelPlugin extends AbstractMojo {
 
             Object expressionObj = attrGetter.invoke(anno);
             if (expressionObj instanceof String) {
-                getLog().info(String.format("Validating expression: %s", expressionObj));
+                getLog().debug(String.format("Validating expression: %s", expressionObj));
                 String expression = (String) attrGetter.invoke(anno);
                 try {
                     processedCount++;
