@@ -22,7 +22,7 @@
         <executions>
           <execution>
             <id>spel-plugin-integration</id>
-            <phase>validate</phase>
+            <phase>integration-test</phase>
             <goals>
               <goal>test</goal>
             </goals>
