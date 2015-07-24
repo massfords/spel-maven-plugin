@@ -63,7 +63,12 @@ public class SpelPlugin extends AbstractMojo {
     @Parameter(property = "annotations", required = false)
     private List<SpelAnnotation> annotations = defaults;
 
+    private final SpelValidationReport report = new SpelValidationReport();
+
     public void execute() throws MojoExecutionException {
+
+        final File outputFile = new File(getProject().getModel().getBuild().getDirectory(),
+                "/spel-maven-plugin/report.log");
 
         ExpressionParser parser = new SpelExpressionParser();
 
@@ -101,14 +106,17 @@ public class SpelPlugin extends AbstractMojo {
                                 " failed to parse: " + e.getMessage());
                     }
                 }
+                report.success();
             }
         } catch (Exception e) {
+            report.createReportFile(outputFile);
             throw new MojoExecutionException("A fatal error occurred while validating Spel annotations," +
                     " see stack trace for details.", e);
         }
+        report.createReportFile(outputFile);
         if (errorCount > 0) {
             throw new MojoExecutionException("Spel validation failed on one or more annotations. See the specific" +
-            "error output for more information.");
+                    "error output for more information.");
         }
     }
 
@@ -136,6 +144,7 @@ public class SpelPlugin extends AbstractMojo {
      */
     private void reportError(String message) throws SpelValidationException {
         getLog().error(message);
+        report.error(message);
         ++errorCount;
         if (errorCount >= maxValidationErrors) {
             throw new SpelValidationException("Reached Maximum Amount of Errors");
