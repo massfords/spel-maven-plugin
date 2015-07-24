@@ -1,6 +1,6 @@
 import groovy.json.JsonSlurper
-
-def reportFile = new File( basedir, "target/spel-maven-plugin/report.txt" );
+File dir = basedir
+def reportFile = new File( dir, "target/spel-maven-plugin/report.txt" );
 assert reportFile.isFile()
 def contents = new JsonSlurper().parseText(reportFile.text)
 assert contents instanceof Map
