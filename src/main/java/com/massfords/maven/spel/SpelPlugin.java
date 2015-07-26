@@ -205,7 +205,7 @@ public class SpelPlugin extends AbstractMojo {
                 String expression = (String) attrGetter.invoke(anno);
                 try {
                     processedCount++;
-                    validator.validate(expression);
+                    validator.validate(expression, sa.getExpressionRootClass());
                     report.success();
                 } catch(ParseException e) {
                     String pattern = "Spel annotation %s.%s with expression %s failed to parse. Error message: %s";
@@ -243,6 +243,17 @@ public class SpelPlugin extends AbstractMojo {
                 getLog().info(String.format("Loaded annotation %s", sa.getName()));
             } catch (Exception e) {
                 getLog().warn("Could not find and instantiate class for annotation with name: " + sa.getName());
+            }
+        }
+
+        if (sa.getExpressionRootClass() == null && sa.getExpressionRoot() != null) {
+            try {
+                //noinspection unchecked
+                Class<?> clazz = projectClassloader.loadClass(sa.getExpressionRoot());
+                sa.setExpressionRootClass(clazz);
+                getLog().info(String.format("Loaded annotation expressionRoot %s", sa.getExpressionRoot()));
+            } catch (Exception e) {
+                getLog().warn("Could not find and instantiate class for annotation expressionRoot with name: " + sa.getExpressionRoot());
             }
         }
     }

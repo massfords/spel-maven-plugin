@@ -37,9 +37,8 @@
                     <failOnError>false</failOnError>
                     <annotations>
                         <SpelAnnotation>
-                            <name>
-                                org.springframework.security.access.prepost.PreAuthorize
-                            </name>
+                            <name>org.springframework.security.access.prepost.PreAuthorize</name>
+                            <expressionRoot>org.springframework.security.access.expression.SecurityExpressionRoot</expressionRoot>
                         </SpelAnnotation>
                     </annotations>
                 </configuration>

@@ -6,6 +6,6 @@ public interface Foo {
     @PreAuthorize("hasRoll('foo')")
     public void badMethod();
 
-    @PreAuthorize("hasRoll('foo)")
+    @PreAuthorize("hasRole('foo)")
     public void unterminatedString();
 }

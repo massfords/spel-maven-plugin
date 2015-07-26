@@ -1,8 +1,8 @@
 package com.massfords.maven.spel;
 
-import org.junit.Ignore;
 import org.junit.Test;
 import org.springframework.expression.ParseException;
+import org.springframework.security.access.expression.SecurityExpressionRoot;
 
 /**
  * @author markford
@@ -13,17 +13,16 @@ public class ExpressionValidatorTest {
 
     @Test
     public void ok() throws Exception {
-        validator.validate("hasRole('ROLE_ADMIN')");
+        validator.validate("hasRole('ROLE_ADMIN')", SecurityExpressionRoot.class);
     }
 
     @Test(expected = ParseException.class)
     public void missingQuote() throws Exception {
-        validator.validate("hasRole('ROLE_ADMIN)");
+        validator.validate("hasRole('ROLE_ADMIN)", SecurityExpressionRoot.class);
     }
 
     @Test(expected = ExpressionValidationException.class)
-    @Ignore("disabled until we integrate a contexts for expressions")
-    public void unknownFunction() throws Exception {
-        validator.validate("hasRoll('ROLE_ADMIN')");
+    public void unknownMethod() throws Exception {
+        validator.validate("hasRoll('ROLE_ADMIN')", SecurityExpressionRoot.class);
     }
 }
