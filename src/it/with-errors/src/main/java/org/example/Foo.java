@@ -8,4 +8,7 @@ public interface Foo {
 
     @PreAuthorize("hasRole('foo)")
     public void unterminatedString();
+
+    @PreAuthorize("#otherObject.isAllowed()")
+    public void methodOnOtherContext();
 }

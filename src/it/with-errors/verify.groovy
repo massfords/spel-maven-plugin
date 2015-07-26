@@ -6,6 +6,6 @@ assert reportFile.isFile()
 def contents = new JsonSlurper().parse(new FileReader(reportFile))
 assert contents instanceof Map
 
-assert contents.get("checked") == 2
-assert contents.get("valid") == 0
+assert contents.get("checked") == 3
+assert contents.get("valid") == 1
 assert contents.get("invalid") == 2

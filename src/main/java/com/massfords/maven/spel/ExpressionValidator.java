@@ -3,8 +3,11 @@ package com.massfords.maven.spel;
 import org.springframework.expression.ExpressionParser;
 import org.springframework.expression.ParseException;
 import org.springframework.expression.spel.SpelNode;
+import org.springframework.expression.spel.ast.BeanReference;
 import org.springframework.expression.spel.ast.MethodReference;
 import org.springframework.expression.spel.ast.Operator;
+import org.springframework.expression.spel.ast.TypeReference;
+import org.springframework.expression.spel.ast.VariableReference;
 import org.springframework.expression.spel.standard.SpelExpression;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 
@@ -34,7 +37,7 @@ public class ExpressionValidator {
 
     private void handle(SpelNode node, Class<?> expressionRoot) throws ExpressionValidationException{
         if (node instanceof MethodReference) {
-            verify((MethodReference)node, expressionRoot);
+            verify((MethodReference) node, expressionRoot);
         } else if (node instanceof Operator) {
             Operator operator = (Operator) node;
             handle(operator.getLeftOperand(), expressionRoot);
@@ -42,6 +45,13 @@ public class ExpressionValidator {
         } else if (node != null) {
             for(int i=0; i<node.getChildCount(); i++) {
                 SpelNode child = node.getChild(i);
+                if (child instanceof VariableReference ||
+                        child instanceof TypeReference ||
+                        child instanceof BeanReference) {
+                    // stop inspecting if it's a variable or type reference.
+                    // We can handle this later if we get smart about resolving these
+                    break;
+                }
                 handle(child, expressionRoot);
             }
         }
@@ -52,8 +62,21 @@ public class ExpressionValidator {
         int args = node.getChildCount();
         Method[] methods = expressionRoot.getDeclaredMethods();
         for(Method m : methods) {
-            if (m.getName().equals(methodName) && args == m.getParameterCount()) {
-                return;
+            if (m.getName().equals(methodName)) {
+                // exact match on the args
+                if (args == m.getParameterCount()) {
+                    return;
+                }
+                Class<?>[] parameterTypes = m.getParameterTypes();
+                if (m.getName().equals(methodName) &&
+                        parameterTypes != null &&
+                        parameterTypes.length>=1 &&
+                        parameterTypes[parameterTypes.length-1].isArray()) {
+                    // allow the number of params to be one less or >= the reported length
+                    if(args == m.getParameterCount()-1 || args >= m.getParameterCount()) {
+                        return;
+                    }
+                }
             }
         }
         // if we get here, then we were unable to match the method call
