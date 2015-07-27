@@ -95,7 +95,7 @@ public class SpelPlugin extends AbstractMojo {
      * Scans the source code for this module to look for instances of the
      * annotations we're looking for.
      *
-     * @throws MojoExecutionException
+     * @throws MojoExecutionException thrown if there are errors during analysis
      */
     public void execute() throws MojoExecutionException {
 
@@ -260,9 +260,9 @@ public class SpelPlugin extends AbstractMojo {
 
     /**
      * Extracted this method simply for unit testing.
-     * @param classpathElements
-     * @return
-     * @throws MojoExecutionException
+     * @param classpathElements List of class path entries from the maven project
+     * @return array of URL's for the classpath
+     * @throws MojoExecutionException only thrown if we can't convert a classpath element to a URL which shouldn't happen
      */
     protected URL[] buildMavenClasspath(List<String> classpathElements) throws MojoExecutionException {
         List<URL> projectClasspathList = new ArrayList<>();
