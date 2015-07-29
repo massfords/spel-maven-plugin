@@ -48,6 +48,10 @@
             <email>mark@massfords.com</email>
             <url>code.massfords.com</url>
         </developer>
+        <developer>
+            <id>samwise</id>
+            <name>Sam Lazarus</name>
+        </developer>
     </developers>
 
     <properties>
